@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Ordering</title>
-    <link rel="stylesheet" href="foodorder.css">
+    <link rel="stylesheet" href="log.css">
 </head>
 <body>
     <!-- Login Page -->
@@ -32,7 +32,9 @@
         <h2>Menu</h2>
         <input type="text" id="searchBar" placeholder="Search for Products" oninput="searchProducts()">
         <div id="productList" class="product-list"></div>
-        <button onclick="viewCart()">View Cart (<span id="cartCount">0</span>)</button>
+
+        <!-- Move "View Cart" to top-right -->
+        <button onclick="viewCart()" id="viewCartButton">View Cart (<span id="cartCount">0</span>)</button>
     </div>
 
     <!-- Cart Page -->
@@ -42,9 +44,11 @@
         <p id="totalAmount">Total: ₹0</p>
 
         <!-- Coupon Code Section -->
-        <input type="text" id="couponCode" placeholder="Enter Coupon Code" />
-        <button onclick="applyCoupon()">Apply Coupon</button>
-        <p id="couponMessage"></p>
+        <div id="couponSection">
+            <input type="text" id="couponCode" placeholder="Enter Coupon Code" />
+            <button onclick="applyCoupon()">Apply Coupon</button>
+            <p id="couponMessage"></p>
+        </div>
 
         <button onclick="checkout()">Proceed to Checkout</button>
         <button onclick="goBackToMenu()">Go Back to Menu</button>
@@ -61,6 +65,6 @@
         </form>
     </div>
 
-    <script src="foodorder.js"></script>
+    <script src="log.js"></script>
 </body>
 </html>
