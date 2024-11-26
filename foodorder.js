@@ -1,6 +1,12 @@
 let currentRestaurant = '';
 let cart = [];
-let discount = 0;  // To store the discount amount
+let discount = 0;
+
+// Mock Data for Coupon Codes (Replace with actual logic in production)
+const validCoupons = {
+    'DISCOUNT10': 10,   // 10% discount
+    'DISCOUNT20': 20,   // 20% discount
+};
 
 // Mock Data for Products (Replace with actual data in production)
 const restaurants = {
@@ -11,63 +17,98 @@ const restaurants = {
         { name: 'Salad', price: 80, img: 'salad.jpg' },
         { name: 'Fries', price: 50, img: 'fries.jpg' }
     ],
-    // ... Add other restaurants here
+    restaurant2: [
+        { name: 'Noodles', price: 120, img: 'noodles.jpg' },
+        { name: 'Spring Rolls', price: 100, img: 'springrolls.jpg' },
+        { name: 'Dim Sum', price: 180, img: 'dimsum.jpg' },
+        { name: 'Soup', price: 80, img: 'soup.jpg' },
+        { name: 'Fried Rice', price: 150, img: 'friedrice.jpg' }
+    ],
+    restaurant3: [
+        { name: 'Tacos', price: 150, img: 'tacos.jpg' },
+        { name: 'Burrito', price: 180, img: 'burrito.jpg' },
+        { name: 'Quesadilla', price: 220, img: 'quesadilla.jpg' },
+        { name: 'Nachos', price: 120, img: 'nachos.jpg' },
+        { name: 'Guacamole', price: 80, img: 'guacamole.jpg' }
+    ],
+    restaurant4: [
+        { name: 'Sushi', price: 300, img: 'sushi.jpg' },
+        { name: 'Ramen', price: 250, img: 'ramen.jpg' },
+        { name: 'Tempura', price: 200, img: 'tempura.jpg' },
+        { name: 'Gyoza', price: 150, img: 'gyoza.jpg' },
+        { name: 'Miso Soup', price: 100, img: 'misosoup.jpg' }
+    ],
+    restaurant5: [
+        { name: 'Steak', price: 500, img: 'steak.jpg' },
+        { name: 'Burger', price: 350, img: 'burger.jpg' },
+        { name: 'Lobster', price: 800, img: 'lobster.jpg' },
+        { name: 'Chicken Wings', price: 250, img: 'wings.jpg' },
+        { name: 'Pork Ribs', price: 600, img: 'ribs.jpg' }
+    ]
 };
 
-// Mock Data for Authentication (For demo purposes)
-const validCredentials = {
-    username: 'user',
-    password: 'password'
-};
-
+// Function to login
 function login() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    
-    if (username === validCredentials.username && password === validCredentials.password) {
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('foodPage').style.display = 'block';
-    } else {
-        alert('Invalid credentials');
-    }
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('foodPage').style.display = 'block';
 }
 
+// Function to load restaurant menu
 function loadRestaurantMenu(restaurant) {
     currentRestaurant = restaurant;
-    document.getElementById('foodPage').style.display = 'none';
-    document.getElementById('menuPage').style.display = 'block';
-    
-    // Initially show all products
-    displayProducts(restaurants[restaurant]);
-}
+    const menu = restaurants[restaurant];
+    const productListDiv = document.getElementById('productList');
+    productListDiv.innerHTML = '';
 
-function displayProducts(products) {
-    const productList = document.getElementById('productList');
-    productList.innerHTML = ''; // Clear the list first
-    
-    products.forEach(product => {
+    menu.forEach(product => {
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
             <img src="${product.img}" alt="${product.name}">
-            <p>${product.name}</p>
+            <h3>${product.name}</h3>
             <p>₹${product.price}</p>
             <button onclick="addToCart('${product.name}', ${product.price})">Add to Cart</button>
         `;
-        productList.appendChild(productDiv);
+        productListDiv.appendChild(productDiv);
+    });
+
+    document.getElementById('foodPage').style.display = 'none';
+    document.getElementById('menuPage').style.display = 'block';
+}
+
+// Function to search products
+function searchProducts() {
+    const searchQuery = document.getElementById('searchBar').value.toLowerCase();
+    const menu = restaurants[currentRestaurant];
+    const filteredMenu = menu.filter(product => product.name.toLowerCase().includes(searchQuery));
+
+    const productListDiv = document.getElementById('productList');
+    productListDiv.innerHTML = '';
+
+    filteredMenu.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.classList.add('product');
+        productDiv.innerHTML = `
+            <img src="${product.img}" alt="${product.name}">
+            <h3>${product.name}</h3>
+            <p>₹${product.price}</p>
+            <button onclick="addToCart('${product.name}', ${product.price})">Add to Cart</button>
+        `;
+        productListDiv.appendChild(productDiv);
     });
 }
 
-// Add product to cart
+// Function to add item to cart
 function addToCart(productName, price) {
     cart.push({ productName, price });
     updateCart();
 }
 
+// Function to update cart and total price
 function updateCart() {
     const cartItemsDiv = document.getElementById('cartItems');
     cartItemsDiv.innerHTML = '';
-    
+
     let total = 0;
     cart.forEach(item => {
         const cartItemDiv = document.createElement('div');
@@ -77,43 +118,44 @@ function updateCart() {
     });
 
     // Apply discount
-    let discountedTotal = total - (total * discount);
-    document.getElementById('totalAmount').innerText = `Total: ₹${discountedTotal.toFixed(2)}`;
-    
-    // Update the cart count notification
+    if (discount > 0) {
+        total -= (total * discount) / 100;
+    }
+
+    // Update total amount
+    document.getElementById('totalAmount').innerText = `Total: ₹${total.toFixed(2)}`;
+
+    // Update cart count notification
     document.getElementById('cartCount').innerText = cart.length;
 }
 
-function applyCoupon() {
-    const couponCode = document.getElementById('couponCode').value.trim();
-    const couponMessage = document.getElementById('couponMessage');
-
-    // Check for valid coupon codes (you can add more coupon codes as needed)
-    if (couponCode === "DISCOUNT10") {
-        discount = 0.1;  // 10% discount
-        couponMessage.innerText = "Coupon applied! 10% discount.";
-    } else if (couponCode === "DISCOUNT20") {
-        discount = 0.2;  // 20% discount
-        couponMessage.innerText = "Coupon applied! 20% discount.";
-    } else {
-        discount = 0;  // No discount if coupon is invalid
-        couponMessage.innerText = "Invalid coupon code.";
-    }
-
-    updateCart();  // Recalculate the total with the discount
-}
-
-function checkout() {
-    document.getElementById('cartPage').style.display = 'none';
-    document.getElementById('checkoutPage').style.display = 'block';
-}
-
+// Function to view cart
 function viewCart() {
     document.getElementById('menuPage').style.display = 'none';
     document.getElementById('cartPage').style.display = 'block';
 }
 
+// Function to apply coupon
+function applyCoupon() {
+    const couponCode = document.getElementById('couponCode').value.toUpperCase();
+    const couponMessage = document.getElementById('couponMessage');
+    if (validCoupons[couponCode]) {
+        discount = validCoupons[couponCode];
+        couponMessage.textContent = `Coupon applied! You get ${discount}% off.`;
+        updateCart();  // Update cart total with discount
+    } else {
+        discount = 0;
+        couponMessage.textContent = 'Invalid coupon code.';
+    }
+}
+
+// Function to go back to the menu page
 function goBackToMenu() {
     document.getElementById('cartPage').style.display = 'none';
     document.getElementById('menuPage').style.display = 'block';
+}
+
+function checkout() {
+    document.getElementById('cartPage').style.display = 'none';
+    document.getElementById('checkoutPage').style.display = 'block';
 }
