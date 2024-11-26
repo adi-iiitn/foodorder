@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Ordering</title>
+    <link rel="stylesheet" href="foodorder.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Enter Username">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Food Order Page -->
+    <div id="foodPage" class="food-page" style="display:none;">
+        <h2>Choose Restaurant</h2>
+        <div class="restaurants">
+            <div class="restaurant" onclick="loadRestaurantMenu('restaurant1')">Restaurant 1</div>
+            <div class="restaurant" onclick="loadRestaurantMenu('restaurant2')">Restaurant 2</div>
+            <div class="restaurant" onclick="loadRestaurantMenu('restaurant3')">Restaurant 3</div>
+            <div class="restaurant" onclick="loadRestaurantMenu('restaurant4')">Restaurant 4</div>
+            <div class="restaurant" onclick="loadRestaurantMenu('restaurant5')">Restaurant 5</div>
+        </div>
+    </div>
+
+    <!-- Menu Page for a Selected Restaurant -->
+    <div id="menuPage" class="menu-page" style="display:none;">
+        <h2>Menu</h2>
+        <input type="text" id="searchBar" placeholder="Search for Products" oninput="searchProducts()">
+        <div id="productList" class="product-list"></div>
+        <button onclick="viewCart()">View Cart (<span id="cartCount">0</span>)</button>
+    </div>
+
+    <!-- Cart Page -->
+    <div id="cartPage" class="cart-page" style="display:none;">
+        <h2>Cart</h2>
+        <div id="cartItems"></div>
+        <p id="totalAmount">Total: ₹0</p>
+
+        <!-- Coupon Code Section -->
+        <input type="text" id="couponCode" placeholder="Enter Coupon Code" />
+        <button onclick="applyCoupon()">Apply Coupon</button>
+        <p id="couponMessage"></p>
+
+        <button onclick="checkout()">Proceed to Checkout</button>
+        <button onclick="goBackToMenu()">Go Back to Menu</button>
+    </div>
+
+    <!-- Checkout Page -->
+    <div id="checkoutPage" class="checkout-page" style="display:none;">
+        <h2>Checkout</h2>
+        <form id="checkoutForm">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="text" name="address" placeholder="Your Address" required>
+            <input type="text" name="phone" placeholder="Your Phone Number" required>
+            <button type="submit">Submit Order</button>
+        </form>
+    </div>
+
+    <script src="foodorder.js"></script>
+</body>
+</html>
