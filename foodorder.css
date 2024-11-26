@@ -85,6 +85,7 @@ input {
 
 .cart-page {
     margin-top: 20px;
+    position: relative;
 }
 
 .checkout-page input {
@@ -98,4 +99,27 @@ input {
     color: white;
     border-radius: 50%;
     padding: 5px 10px;
+}
+
+/* Position the cart button at the top right */
+#viewCartButton {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+/* Coupon section styles */
+#couponSection {
+    margin-top: 20px;
+}
+
+#couponCode {
+    width: 80%;
+    padding: 10px;
+    margin-right: 10px;
+}
+
+#couponMessage {
+    color: green;
+    font-weight: bold;
 }
