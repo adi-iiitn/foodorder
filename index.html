@@ -1,70 +1,245 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Ordering</title>
-    <link rel="stylesheet" href="foodorder.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuickGrocer — Grocery Delivery MVP</title>
+  <style>
+    :root{--accent:#ff6b6b;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:#f7fafc;color:#111}
+    header{background:#fff;padding:18px 22px;border-bottom:1px solid #e6edf3;display:flex;align-items:center;gap:12px}
+    .logo{font-weight:700;color:var(--accent);font-size:20px;cursor:pointer}
+    .container{max-width:1100px;margin:20px auto;padding:0 16px}
+    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    .secondary{background:#fff;border:1px solid #e6edf3;color:#111}
+    .card{background:#fff;border:1px solid #e6edf3;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(12,13,14,0.03);display:flex;flex-direction:column}
+    .card img{height:140px;border-radius:8px;object-fit:cover}
+    .cart{position:fixed;right:18px;bottom:18px;background:linear-gradient(180deg,var(--accent),#ff4757);color:white;padding:12px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .modal .box{background:white;padding:18px;border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow:auto;text-align:center;position:relative}
+    footer{padding:22px;text-align:center;color:var(--muted)}
+
+    /* ===== Loader ===== */
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid var(--accent);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ===== Success Page ===== */
+    .success-box {text-align:center;padding:30px;}
+    .checkmark {
+      width: 80px;height: 80px;border-radius:50%;display:inline-block;
+      background:#4CAF50;position:relative;animation:pop 0.4s ease;
+    }
+    .checkmark:after {
+      content:"";position:absolute;left:22px;top:12px;width:20px;height:40px;
+      border:solid #fff;border-width:0 6px 6px 0;transform:rotate(45deg);
+    }
+    @keyframes pop {0%{transform:scale(0.3)} 100%{transform:scale(1)}}
+  </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="loginPage" class="login-page">
-        <h2>Login</h2>
-        <input type="text" id="username" placeholder="Enter Username">
-        <input type="password" id="password" placeholder="Enter Password">
-        <button onclick="login()">Login</button>
+  <header>
+    <div class="logo" onclick="location.reload()">QuickGrocer</div>
+    <div style="flex:1"></div>
+    <div id="userSection"></div>
+  </header>
+
+  <main id="authPage" class="container" style="display:none"></main>
+  <main id="shopPage" class="container" style="display:none">
+    <h2>Browse Products</h2>
+    <div class="filters">
+      <input type="text" id="searchBar" placeholder="Search products...">
+      <select id="sortSelect">
+        <option value="">Sort by</option>
+        <option value="low-high">Price: Low → High</option>
+        <option value="high-low">Price: High → Low</option>
+        <option value="az">Name: A → Z</option>
+      </select>
     </div>
+    <div class="categories" id="categoryBtns"></div>
+    <div id="productGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:18px"></div>
+  </main>
 
-    <!-- Food Order Page -->
-    <div id="foodPage" class="food-page" style="display:none;">
-        <h2>Choose Restaurant</h2>
-        <div class="restaurants">
-            <div class="restaurant" onclick="loadRestaurantMenu('restaurant1')">Restaurant 1</div>
-            <div class="restaurant" onclick="loadRestaurantMenu('restaurant2')">Restaurant 2</div>
-            <div class="restaurant" onclick="loadRestaurantMenu('restaurant3')">Restaurant 3</div>
-            <div class="restaurant" onclick="loadRestaurantMenu('restaurant4')">Restaurant 4</div>
-            <div class="restaurant" onclick="loadRestaurantMenu('restaurant5')">Restaurant 5</div>
-        </div>
-    </div>
+  <div id="cartBtn" class="cart" style="display:none">
+    <div><b>Cart</b> (<span id="cartCount">0</span>)</div>
+    <div><button id="openCart" class="btn">Open</button></div>
+  </div>
 
-    <!-- Menu Page for a Selected Restaurant -->
-    <div id="menuPage" class="menu-page" style="display:none;">
-        <h2>Menu</h2>
-        <input type="text" id="searchBar" placeholder="Search for Products" oninput="searchProducts()">
-        <div id="productList" class="product-list"></div>
+  <div id="modalRoot" style="display:none"></div>
 
-        <!-- Move "View Cart" to top-right -->
-        <button onclick="viewCart()" id="viewCartButton">View Cart (<span id="cartCount">0</span>)</button>
-    </div>
+  <footer>© QuickGrocer • MVP Demo</footer>
 
-    <!-- Cart Page -->
-    <div id="cartPage" class="cart-page" style="display:none;">
-        <h2>Cart</h2>
-        <div id="cartItems"></div>
-        <p id="totalAmount">Total: ₹0</p>
+<script>
+/* ===== AUTH ===== */
+function currentUser(){return JSON.parse(localStorage.getItem('quickgrocer_user')||'null')}
+function setUser(user){localStorage.setItem('quickgrocer_user',JSON.stringify(user))}
+function logout(){localStorage.removeItem('quickgrocer_user');location.reload()}
 
-        <!-- Coupon Code Section -->
-        <div id="couponSection">
-            <input type="text" id="couponCode" placeholder="Enter Coupon Code" />
-            <button onclick="applyCoupon()">Apply Coupon</button>
-            <p id="couponMessage"></p>
-        </div>
+function renderAuthPage(type='login'){
+  const root=document.getElementById('authPage');
+  root.style.display='block';document.getElementById('shopPage').style.display='none';
+  root.innerHTML='';
+  const box=document.createElement('div');box.className='auth-box';
+  box.innerHTML=`<h2>${type==='login'?'Login':'Sign Up'}</h2>
+    <input id="email" type="email" placeholder="Email" required />
+    <input id="pass" type="password" placeholder="Password" required />
+    ${type==='signup'?'<input id="name" placeholder="Full Name" />':''}
+    <button class="btn" style="width:100%;margin-top:8px">${type==='login'?'Login':'Create Account'}</button>`;
+  root.appendChild(box);
+  box.querySelector('button').onclick=()=>{
+    const email=box.querySelector('#email').value.trim();
+    const pass=box.querySelector('#pass').value.trim();
+    if(!email||!pass) return alert('Fill all fields');
+    if(type==='signup'){
+      const name=box.querySelector('#name').value.trim();
+      if(!name) return alert('Enter name');
+      const users=JSON.parse(localStorage.getItem('quickgrocer_users')||'{}');
+      if(users[email]) return alert('User exists');
+      users[email]={email,pass,name};localStorage.setItem('quickgrocer_users',JSON.stringify(users));
+      setUser({email,name});location.reload();
+    }else{
+      const users=JSON.parse(localStorage.getItem('quickgrocer_users')||'{}');
+      if(!users[email]||users[email].pass!==pass) return alert('Invalid credentials');
+      setUser({email,name:users[email].name});location.reload();
+    }
+  }
+}
 
-        <button onclick="checkout()">Proceed to Checkout</button>
-        <button onclick="goBackToMenu()">Go Back to Menu</button>
-    </div>
+/* ===== PRODUCTS ===== */
+const products=[
+ {id:'P001',name:'Basmati Rice 5kg',price:450,unit:'5kg',category:'Grains',image:'https://via.placeholder.com/300x200?text=Rice'},
+ {id:'P002',name:'Wheat Atta 5kg',price:220,unit:'5kg',category:'Grains',image:'https://via.placeholder.com/300x200?text=Atta'},
+ {id:'P003',name:'Sugar 1kg',price:45,unit:'1kg',category:'Essentials',image:'https://via.placeholder.com/300x200?text=Sugar'},
+ {id:'P004',name:'Milk 1L',price:55,unit:'1L',category:'Dairy',image:'https://via.placeholder.com/300x200?text=Milk'},
+ {id:'P005',name:'Tea Powder 250g',price:110,unit:'250g',category:'Beverages',image:'https://via.placeholder.com/300x200?text=Tea'}
+];
+let cart=JSON.parse(localStorage.getItem('quickgrocer_cart')||'{}');
+let activeCategory="";let searchTerm="";let sortType="";
 
-    <!-- Checkout Page -->
-    <div id="checkoutPage" class="checkout-page" style="display:none;">
-        <h2>Checkout</h2>
-        <form id="checkoutForm">
-            <input type="text" name="name" placeholder="Your Name" required>
-            <input type="text" name="address" placeholder="Your Address" required>
-            <input type="text" name="phone" placeholder="Your Phone Number" required>
-            <button type="submit">Submit Order</button>
-        </form>
-    </div>
+function renderCategories(){
+  const cats=[...new Set(products.map(p=>p.category))];
+  const wrap=document.getElementById('categoryBtns');wrap.innerHTML='';
+  ['All',...cats].forEach(cat=>{
+    const btn=document.createElement('button');btn.textContent=cat;
+    if(cat===activeCategory||(cat==='All'&&!activeCategory)) btn.classList.add('active');
+    btn.onclick=()=>{activeCategory=(cat==='All'?"":cat);renderProducts()};
+    wrap.appendChild(btn);
+  });
+}
+function renderProducts(){
+  const grid=document.getElementById('productGrid');grid.innerHTML='';
+  let filtered=products.filter(p=>
+    (!activeCategory||p.category===activeCategory) &&
+    (!searchTerm||p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+  if(sortType==='low-high') filtered.sort((a,b)=>a.price-b.price);
+  if(sortType==='high-low') filtered.sort((a,b)=>b.price-a.price);
+  if(sortType==='az') filtered.sort((a,b)=>a.name.localeCompare(b.name));
+  filtered.forEach(p=>{
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`<img src="${p.image}"><h4>${p.name}</h4><div>₹${p.price} / ${p.unit}</div>`;
+    const btn=document.createElement('button');btn.className='btn';btn.textContent='Add';
+    btn.onclick=()=>addToCart(p.id);
+    card.appendChild(btn);grid.appendChild(card);
+  });
+}
+function addToCart(id){if(!cart[id])cart[id]={...products.find(p=>p.id===id),qty:0};cart[id].qty++;saveCart()}
+function saveCart(){localStorage.setItem('quickgrocer_cart',JSON.stringify(cart));renderCartBtn()}
+function renderCartBtn(){const count=Object.values(cart).reduce((s,i)=>s+i.qty,0);const btn=document.getElementById('cartBtn');if(count>0){btn.style.display='flex';document.getElementById('cartCount').textContent=count}else btn.style.display='none'}
 
-    <script src="foodorder.js"></script>
+/* ===== GOOGLE SHEETS ===== */
+async function sendOrderToSheet(order){
+  const API_URL="https://script.google.com/macros/s/AKfycbyqIGWHnI6P0c4iZAU0pphjjwc4C0P1K2xqm7mckdJcnCAKF2D-awF_E3c7LrJxSg4S/exec";
+  const res=await fetch(API_URL,{method:"POST",body:JSON.stringify(order)});
+  return res.json();
+}
+
+/* ===== CART MODAL ===== */
+function openCartModal(){
+  const root=document.getElementById('modalRoot');
+  root.style.display='block';
+  root.innerHTML='';
+
+  const modal=document.createElement('div');
+  modal.className='modal';
+
+  const box=document.createElement('div');
+  box.className='box';
+
+  // Close button
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='×';
+  closeBtn.style.cssText='position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer';
+  closeBtn.onclick=()=>{ root.style.display='none'; };
+  box.appendChild(closeBtn);
+
+  box.innerHTML+=`<h3>Your Cart</h3>`;
+
+  let total=0;
+  Object.values(cart).forEach(i=>{
+    total+=i.price*i.qty;
+    box.innerHTML+=`<p>${i.name} × ${i.qty} = ₹${i.price*i.qty}</p>`;
+  });
+  box.innerHTML+=`<p><b>Total: ₹${total}</b></p>`;
+
+  const addr=document.createElement('input');addr.placeholder="Delivery Address";addr.style.width="100%"; box.appendChild(addr);
+  const contact=document.createElement('input');contact.placeholder="Contact Number";contact.type="tel";contact.style.width="100%"; box.appendChild(contact);
+
+  const checkout=document.createElement('button');checkout.className='btn';checkout.textContent='Checkout';
+  checkout.onclick=async()=>{
+    const user=currentUser();
+    if(!user) return alert("Login first");
+    if(!addr.value||!contact.value) return alert("Enter address & contact");
+
+    document.body.innerHTML=`<div class="loader"></div><p style="text-align:center">Placing your order...</p>`;
+
+    const order={name:user.name,email:user.email,address:addr.value,contact:contact.value,items:Object.values(cart),total:total};
+    const res=await sendOrderToSheet(order);
+    if(res.status==="ok"){setTimeout(()=>{renderSuccessPage(res.orderId)},1500)}
+    else alert("Order error");
+  };
+  box.appendChild(checkout);
+
+  modal.appendChild(box);
+  root.appendChild(modal);
+
+  // Click outside modal closes
+  modal.onclick=(e)=>{ if(e.target===modal) root.style.display='none'; }
+}
+
+/* ===== SUCCESS PAGE ===== */
+function renderSuccessPage(orderId){
+  document.body.innerHTML=`<div class="success-box">
+    <div class="checkmark"></div>
+    <h2>Order Successful!</h2>
+    <p>Thank you for shopping with QuickGrocer.</p>
+    <p><b>Your Order ID:</b> ${orderId}</p>
+    <button class="btn" onclick="location.reload()">Shop Again</button>
+  </div>`;
+}
+
+/* ===== INIT ===== */
+document.getElementById('openCart').onclick=openCartModal;
+document.getElementById('searchBar').oninput=(e)=>{searchTerm=e.target.value;renderProducts()};
+document.getElementById('sortSelect').onchange=(e)=>{sortType=e.target.value;renderProducts()};
+const user=currentUser();
+if(!user){renderAuthPage('login')}
+else{
+  document.getElementById('authPage').style.display='none';
+  document.getElementById('shopPage').style.display='block';
+  document.getElementById('userSection').innerHTML=`Welcome, ${user.name} <button class="secondary btn" onclick="logout()">Logout</button>`;
+  renderCategories();renderProducts();renderCartBtn();
+}
+</script>
 </body>
 </html>
