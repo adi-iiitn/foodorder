@@ -20,31 +20,20 @@
     footer{padding:22px;text-align:center;color:var(--muted)}
 
     /* ===== Loader ===== */
-    .loader {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid var(--accent);
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-      margin: 40px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    .loader {border: 6px solid #f3f3f3;border-top: 6px solid var(--accent);border-radius: 50%;width: 60px;height: 60px;animation: spin 1s linear infinite;margin: 40px auto;}
+    @keyframes spin {0% { transform: rotate(0deg);}100% { transform: rotate(360deg);} }
 
     /* ===== Success Page ===== */
     .success-box {text-align:center;padding:30px;}
-    .checkmark {
-      width: 80px;height: 80px;border-radius:50%;display:inline-block;
-      background:#4CAF50;position:relative;animation:pop 0.4s ease;
-    }
-    .checkmark:after {
-      content:"";position:absolute;left:22px;top:12px;width:20px;height:40px;
-      border:solid #fff;border-width:0 6px 6px 0;transform:rotate(45deg);
-    }
+    .checkmark {width: 80px;height: 80px;border-radius:50%;display:inline-block;background:#4CAF50;position:relative;animation:pop 0.4s ease;}
+    .checkmark:after {content:"";position:absolute;left:22px;top:12px;width:20px;height:40px;border:solid #fff;border-width:0 6px 6px 0;transform:rotate(45deg);}
     @keyframes pop {0%{transform:scale(0.3)} 100%{transform:scale(1)}}
+
+    /* ===== Auth Box ===== */
+    .auth-box{max-width:400px;margin:60px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    .auth-box input{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #ddd;border-radius:8px}
+    .auth-box p{margin-top:12px;font-size:14px;color:var(--muted)}
+    .auth-box a{color:var(--accent);cursor:pointer}
   </style>
 </head>
 <body>
@@ -54,7 +43,10 @@
     <div id="userSection"></div>
   </header>
 
+  <!-- Auth Page -->
   <main id="authPage" class="container" style="display:none"></main>
+
+  <!-- Shop Page -->
   <main id="shopPage" class="container" style="display:none">
     <h2>Browse Products</h2>
     <div class="filters">
@@ -70,11 +62,13 @@
     <div id="productGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:18px"></div>
   </main>
 
+  <!-- Floating Cart Button -->
   <div id="cartBtn" class="cart" style="display:none">
     <div><b>Cart</b> (<span id="cartCount">0</span>)</div>
     <div><button id="openCart" class="btn">Open</button></div>
   </div>
 
+  <!-- Modal Root -->
   <div id="modalRoot" style="display:none"></div>
 
   <footer>© QuickGrocer • MVP Demo</footer>
@@ -94,7 +88,10 @@ function renderAuthPage(type='login'){
     <input id="email" type="email" placeholder="Email" required />
     <input id="pass" type="password" placeholder="Password" required />
     ${type==='signup'?'<input id="name" placeholder="Full Name" />':''}
-    <button class="btn" style="width:100%;margin-top:8px">${type==='login'?'Login':'Create Account'}</button>`;
+    <button class="btn" style="width:100%;margin-top:8px">${type==='login'?'Login':'Create Account'}</button>
+    <p>${type==='login'?'New user?':'Already have an account?'} 
+       <a onclick="renderAuthPage('${type==='login'?'signup':'login'}')">
+       ${type==='login'?'Sign Up':'Login'}</a></p>`;
   root.appendChild(box);
   box.querySelector('button').onclick=()=>{
     const email=box.querySelector('#email').value.trim();
@@ -105,7 +102,8 @@ function renderAuthPage(type='login'){
       if(!name) return alert('Enter name');
       const users=JSON.parse(localStorage.getItem('quickgrocer_users')||'{}');
       if(users[email]) return alert('User exists');
-      users[email]={email,pass,name};localStorage.setItem('quickgrocer_users',JSON.stringify(users));
+      users[email]={email,pass,name};
+      localStorage.setItem('quickgrocer_users',JSON.stringify(users));
       setUser({email,name});location.reload();
     }else{
       const users=JSON.parse(localStorage.getItem('quickgrocer_users')||'{}');
@@ -159,7 +157,7 @@ function renderCartBtn(){const count=Object.values(cart).reduce((s,i)=>s+i.qty,0
 
 /* ===== GOOGLE SHEETS ===== */
 async function sendOrderToSheet(order){
-  const API_URL="https://script.google.com/macros/s/AKfycbyqIGWHnI6P0c4iZAU0pphjjwc4C0P1K2xqm7mckdJcnCAKF2D-awF_E3c7LrJxSg4S/exec";
+  const API_URL="YOUR_APPSCRIPT_URL"; // replace with your Apps Script Web App URL
   const res=await fetch(API_URL,{method:"POST",body:JSON.stringify(order)});
   return res.json();
 }
@@ -167,8 +165,7 @@ async function sendOrderToSheet(order){
 /* ===== CART MODAL ===== */
 function openCartModal(){
   const root=document.getElementById('modalRoot');
-  root.style.display='block';
-  root.innerHTML='';
+  root.style.display='block';root.innerHTML='';
 
   const modal=document.createElement('div');
   modal.className='modal';
@@ -176,24 +173,23 @@ function openCartModal(){
   const box=document.createElement('div');
   box.className='box';
 
-  // Close button
   const closeBtn=document.createElement('button');
   closeBtn.textContent='×';
   closeBtn.style.cssText='position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer';
   closeBtn.onclick=()=>{ root.style.display='none'; };
   box.appendChild(closeBtn);
 
-  box.innerHTML+=`<h3>Your Cart</h3>`;
+  const title=document.createElement('h3');title.textContent="Your Cart";box.appendChild(title);
 
   let total=0;
   Object.values(cart).forEach(i=>{
     total+=i.price*i.qty;
-    box.innerHTML+=`<p>${i.name} × ${i.qty} = ₹${i.price*i.qty}</p>`;
+    const p=document.createElement('p');p.textContent=`${i.name} × ${i.qty} = ₹${i.price*i.qty}`;box.appendChild(p);
   });
-  box.innerHTML+=`<p><b>Total: ₹${total}</b></p>`;
+  const totalEl=document.createElement('p');totalEl.innerHTML=`<b>Total: ₹${total}</b>`;box.appendChild(totalEl);
 
-  const addr=document.createElement('input');addr.placeholder="Delivery Address";addr.style.width="100%"; box.appendChild(addr);
-  const contact=document.createElement('input');contact.placeholder="Contact Number";contact.type="tel";contact.style.width="100%"; box.appendChild(contact);
+  const addr=document.createElement('input');addr.placeholder="Delivery Address";addr.style.width="100%";box.appendChild(addr);
+  const contact=document.createElement('input');contact.placeholder="Contact Number";contact.type="tel";contact.style.width="100%";box.appendChild(contact);
 
   const checkout=document.createElement('button');checkout.className='btn';checkout.textContent='Checkout';
   checkout.onclick=async()=>{
@@ -213,7 +209,6 @@ function openCartModal(){
   modal.appendChild(box);
   root.appendChild(modal);
 
-  // Click outside modal closes
   modal.onclick=(e)=>{ if(e.target===modal) root.style.display='none'; }
 }
 
