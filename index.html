@@ -157,7 +157,7 @@ function renderCartBtn(){const count=Object.values(cart).reduce((s,i)=>s+i.qty,0
 
 /* ===== GOOGLE SHEETS ===== */
 async function sendOrderToSheet(order){
-  const API_URL="YOUR_APPSCRIPT_URL"; // replace with your Apps Script Web App URL
+  const API_URL="https://script.google.com/macros/s/AKfycbyqIGWHnI6P0c4iZAU0pphjjwc4C0P1K2xqm7mckdJcnCAKF2D-awF_E3c7LrJxSg4S/exec"; // replace with your Apps Script Web App URL
   const res=await fetch(API_URL,{method:"POST",body:JSON.stringify(order)});
   return res.json();
 }
@@ -238,3 +238,4 @@ else{
 </script>
 </body>
 </html>
+
